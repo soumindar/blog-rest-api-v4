@@ -14,7 +14,7 @@ router.get('/', usersService.getData);
 router.get('/log', usersService.getLog);
 
 // get all users
-router.get('/getall', usersService.getAll);
+router.get('/get-all', usersService.getAll);
 
 // get user by id
 router.get('/id/:id', usersValidator.paramId, usersService.getById);
