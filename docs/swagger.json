@@ -1,0 +1,673 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Blog REST API",
+    "description": "A REST API for running blog-like processes. This API can be used for CRUD processes on user, post, and category. This API is created using Express framework on Node.JS. This API is an improvement from the previous version where in this API PostgreSQL is used as a main database and MongoDB is used as a log database.\n\nSome useful links:\n- [The Blog REST API repository](https://github.com/soumindar/blog-rest-api-v4.git)",
+    "contact": {
+      "email": "soumindarqolby@gmail.com"
+    },
+    "version": "4.0.0"
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "auth",
+      "description": "Operation about authentication"
+    },
+    {
+      "name": "users",
+      "description": "Operations about users"
+    },
+    {
+      "name": "post",
+      "description": "Operations about post"
+    },
+    {
+      "name": "category",
+      "description": "Operations about category"
+    }
+  ],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Register new user",
+        "description": "Register new user by name, username, and password",
+        "requestBody": {
+          "description": "Username can only be alphanumeric with minimun 3 characters. Password must contains minimum 6 characters.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Register"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Register success"
+          },
+          "400": {
+            "description": "Invalid username or password"
+          },
+          "409": {
+            "description": "Username already exist"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "User login",
+        "description": "User login using username and password",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Login"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Login success"
+          },
+          "400": {
+            "description": "wrong password"
+          },
+          "404": {
+            "description": "Username not found"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "User logout",
+        "responses": {
+          "200": {
+            "description": "Logout success"
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get user's own data",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/users/log": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get user's own log",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/users/get-all": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get all users data",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/users/username/{username}": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "summary": "Get this user data",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "404": {
+            "description": "Username not found"
+          }
+        }
+      }
+    },
+    "/users/update": {
+      "patch": {
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Update user's data",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUser"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Update success"
+          }
+        }
+      }
+    },
+    "/users/change-password": {
+      "patch": {
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Change user's password",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePassword"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Change password success"
+          },
+          "400": {
+            "description": "Confirm password not match"
+          }
+        }
+      }
+    },
+    "/users/delete": {
+      "delete": {
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Delete user",
+        "responses": {
+          "200": {
+            "description": "Delete success"
+          }
+        }
+      }
+    },
+    "/post": {
+      "get": {
+        "tags": [
+          "post"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get all post",
+        "parameters": [
+          {
+            "name": "page_size",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order_by",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/post/id/{id}": {
+      "get": {
+        "tags": [
+          "post"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get post by ID",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "404": {
+            "description": "Post not found"
+          },
+          "400": {
+            "description": "ID invalid"
+          }
+        }
+      }
+    },
+    "/post/user/{username}": {
+      "get": {
+        "tags": [
+          "post"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get post by username",
+        "parameters": [
+          {
+            "name": "page_size",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order_by",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "404": {
+            "description": "Username not found"
+          }
+        }
+      }
+    },
+    "/post/create": {
+      "post": {
+        "tags": [
+          "post"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Create post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePost"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Create success"
+          },
+          "404": {
+            "description": "Category ID not found"
+          }
+        }
+      }
+    },
+    "/post/edit/{id}": {
+      "patch": {
+        "tags": [
+          "post"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Edit post by ID",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/EditPost"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Update success"
+          },
+          "400": {
+            "description": "Post not owned by this user"
+          },
+          "404": {
+            "description": "Category ID not found"
+          }
+        }
+      }
+    },
+    "/post/delete/{id}": {
+      "patch": {
+        "tags": [
+          "post"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Delete post by ID",
+        "responses": {
+          "200": {
+            "description": "Delete success"
+          },
+          "400": {
+            "description": "Post not owned by this user"
+          }
+        }
+      }
+    },
+    "/category": {
+      "patch": {
+        "tags": [
+          "category"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get category data",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Register": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "soumindar qolby"
+          },
+          "username": {
+            "type": "string",
+            "example": "sou"
+          },
+          "password": {
+            "type": "string",
+            "example": "sou123"
+          }
+        }
+      },
+      "Login": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "example": "sou"
+          },
+          "password": {
+            "type": "string",
+            "example": "sou123"
+          }
+        }
+      },
+      "UpdateUser": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "soumindar"
+          },
+          "username": {
+            "type": "string",
+            "example": "sou"
+          }
+        }
+      },
+      "ChangePassword": {
+        "type": "object",
+        "properties": {
+          "old_pass": {
+            "type": "string",
+            "example": "sou123"
+          },
+          "new_pass": {
+            "type": "string",
+            "example": "sou1234"
+          },
+          "confirm_pass": {
+            "type": "string",
+            "example": "sou1234"
+          }
+        }
+      },
+      "CreatePost": {
+        "type": "object",
+        "properties": {
+          "category_id": {
+            "type": "string",
+            "example": "5eaee21c-5ecf-4a01-8acf-657098e768be"
+          },
+          "title": {
+            "type": "string",
+            "example": "Popular Games 2022"
+          },
+          "content": {
+            "type": "string",
+            "example": "Valorant, PUBG, Mobile Legends"
+          },
+          "image": {
+            "type": "string",
+            "format": "binary"
+          }
+        }
+      },
+      "EditPost": {
+        "type": "object",
+        "properties": {
+          "category_id": {
+            "type": "string",
+            "example": "5eaee21c-5ecf-4a01-8acf-657098e768be"
+          },
+          "title": {
+            "type": "string",
+            "example": "Popular Games 2022"
+          },
+          "content": {
+            "type": "string",
+            "example": "Valorant, PUBG, Mobile Legends"
+          },
+          "image": {
+            "type": "string",
+            "format": "binary"
+          }
+        }
+      }
+    }
+  }
+}

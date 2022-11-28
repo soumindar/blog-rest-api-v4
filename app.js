@@ -8,6 +8,8 @@ const corsOption = require('./config/cors.option');
 const fileUpload = require('express-fileupload');
 const rfs = require('rotating-file-stream');
 const moment = require('moment');
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('./docs/swagger.json');
 const indexRouter = require('./modules/index');
 
 global.__basedir = __dirname;
@@ -34,10 +36,12 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use(cors(corsOption()));
 
 app.use(fileUpload());
 
 app.use('/', indexRouter);
+
 
 module.exports = app;
