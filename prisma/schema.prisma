@@ -42,3 +42,9 @@ model Post {
   user          Users     @relation(fields: [userId], references: [id])
   category      Category  @relation(fields: [categoryId], references: [id])
 }
+
+model Slug {
+  id        String      @id @default(uuid())
+  slug      String
+  counter   Int
+}
