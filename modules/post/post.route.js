@@ -13,6 +13,9 @@ router.get('/', postValidator.queryData, postService.getData);
 // get by id
 router.get('/id/:id', postValidator.paramId, postService.getById);
 
+// get by title
+router.get('/title/:slug', postValidator.paramSlug, postService.getByTitle);
+
 // get by user
 router.get('/user/:username', postValidator.paramUsername, postValidator.queryData, postService.getByUser);
 

@@ -5,8 +5,9 @@ const userTimezone = require('../../config/timezone.config');
 const extention = require('../../utils/get.extention');
 const getBaseUrl = require('../../utils/get.base.url');
 const userLog = require('../../utils/user-log');
+const redisClient = require('../../config/redis.config');
 
-// get data controller
+// get data service
 const getData = async (req, res) => {
   try {
     const { page_size, page, search, category, start_date, end_date, order_by, order } = req.query;
@@ -127,46 +128,56 @@ const getData = async (req, res) => {
   }
 }
 
-// get by id controller
+// get by id service
 const getById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const getPost = await prisma.post.findFirst({
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        contents: true,
-        images: true,
-        createdAt: true,
-        updatedAt: true,
-        category: {
-          select: {
-            id: true,
-            category: true,
-          }
+    let isCahced = false;
+    let getPost;
+    const cacheResult = await redisClient.get(id);
+    if (cacheResult) {
+      isCahced = true;
+      getPost = JSON.parse(cacheResult);
+    } else {
+      getPost = await prisma.post.findFirst({
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          contents: true,
+          images: true,
+          createdAt: true,
+          updatedAt: true,
+          category: {
+            select: {
+              id: true,
+              category: true,
+            }
+          },
+          user: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+            }
+          },
         },
-        user: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
-          }
+        where: {
+          id: id,
+          deleted: null,
         },
-      },
-      where: {
-        id: id,
-        deleted: null,
-      },
-    });
-      
-    if (!getPost) {
-      return res.status(404).json({
-        message: 'post not found',
-        statusCode: 404,
-        data: {}
       });
+
+      if (!getPost) {
+        return res.status(404).json({
+          message: 'post not found',
+          statusCode: 404,
+          data: {}
+        });
+      }
+
+      await redisClient.set(id, JSON.stringify(getPost));
     }
 
     const baseUrl = getBaseUrl(req);
@@ -180,6 +191,82 @@ const getById = async (req, res) => {
     return res.status(200).json({
       message: 'success',
       statusCode: 200,
+      from_cahce: isCahced,
+      data: postData,
+    });
+  } catch (error) {
+    req.error = error.message;
+    return res.status(500).json({
+      message: error.message,
+      statusCode: 500
+    });
+  }
+}
+
+// get by title service
+const getByTitle = async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    let isCahced = false;
+    let getPost;
+    const cacheResult = await redisClient.get(slug);
+    if (cacheResult) {
+      isCahced = true;
+      getPost = JSON.parse(cacheResult);
+    } else {
+      getPost = await prisma.post.findFirst({
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          contents: true,
+          images: true,
+          createdAt: true,
+          updatedAt: true,
+          category: {
+            select: {
+              id: true,
+              category: true,
+            }
+          },
+          user: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+            }
+          },
+        },
+        where: {
+          slug: slug,
+          deleted: null,
+        },
+      });
+
+      if (!getPost) {
+        return res.status(404).json({
+          message: 'post not found',
+          statusCode: 404,
+          data: {}
+        });
+      }
+
+      await redisClient.set(slug, JSON.stringify(getPost));
+    }
+    
+    const baseUrl = getBaseUrl(req);
+    const postData = {
+      ...getPost,
+      createdAt: moment(getPost.created_at).tz(userTimezone).format(),
+      updatedAt: (!getPost.updatedAt) ? null : moment(getPost.updatedAt).tz(userTimezone).format(),
+      images: (!getPost.images) ? baseUrl + '/images/no-image.jpeg' : baseUrl + '/images/' + getPost.images
+    };
+
+    return res.status(200).json({
+      message: 'success',
+      statusCode: 200,
+      from_cahce: isCahced,
       data: postData
     });
   } catch (error) {
@@ -191,7 +278,7 @@ const getById = async (req, res) => {
   }
 }
 
-// get by user controller
+// get by user service
 const getByUser = async (req, res) => {
   try {
     const { username } = req.params;
@@ -331,12 +418,11 @@ const getByUser = async (req, res) => {
   }
 }
 
-// // create post controller
+// // create post service
 const createPost = async (req, res) => {
   try {
     const { category_id, title, content } = req.body;
     const userId = req.user.id;
-    const slug = title.toLowerCase().replace(/[^a-z0-9\s]/gi, '').split(' ').join('-');
 
     const categoryExist =  await prisma.category.findUnique({
       select: { id: true },
@@ -346,6 +432,34 @@ const createPost = async (req, res) => {
       return res.status(404).json({
         message: 'category_id not found',
         statusCode: 404
+      });
+    }
+
+    let slug = title.toLowerCase().replace(/\W+/g, '-');
+    const slugExist = await prisma.slug.findFirst({
+      select: {
+        id: true,
+        counter: true,
+      },
+      where: { slug: slug },
+    });
+    if (slugExist) {
+      const counterNow = slugExist.counter + 1
+      await prisma.slug.update({
+        data: {
+          counter: counterNow,
+        },
+        where: {
+          id: slugExist.id,
+        },
+      });
+      slug = slug + '-' + counterNow;
+    } else {
+      await prisma.slug.create({
+        data: {
+          slug: slug,
+          counter: 1,
+        }
       });
     }
 
@@ -380,6 +494,7 @@ const createPost = async (req, res) => {
       data: createData
     });
   } catch (error) {
+    console.log(error.message);
     req.error = error.message;
     return res.status(500).json({
       message: error.message,
@@ -388,14 +503,13 @@ const createPost = async (req, res) => {
   }
 }
 
-// // edit post controller
+// // edit post service
 const editPost = async (req, res) => {
   try {
     const userId = req.user.id;
     const { id } = req.params;
     const postId = id;
     const { category_id, title, content } = req.body;
-    const slug = title.toLowerCase().replace(/[^a-z0-9\s]/gi, '').split(' ').join('-');
 
     const checkPost = await prisma.post.findFirst({
       select: {
@@ -443,6 +557,31 @@ const editPost = async (req, res) => {
       });
     } 
 
+    let slug = title.toLowerCase().replace(/\W+/g, '-');
+    const slugExist = await prisma.slug.findFirst({
+      select: { counter: true },
+      where: { slug: slug },
+    });
+    if (slugExist) {
+      const counterNow = slugExist.counter + 1
+      await prisma.slug.update({
+        data: {
+          counter: counterNow,
+        },
+        where: {
+          slug: slug,
+        },
+      });
+      slug = slug + '-' + counterNow;
+    } else {
+      await prisma.slug.create({
+        data: {
+          slug: slug,
+          counter: 1,
+        }
+      });
+    }
+
     const updateData = await prisma.post.update({
       data: {
         categoryId: category_id,
@@ -452,7 +591,7 @@ const editPost = async (req, res) => {
         images: fileName,
       },
       where: { id: postId },
-    });  
+    });
 
     await userLog.createLog(userId, `edit post ${updateData.id}`)
     return res.status(200).json({
@@ -469,7 +608,7 @@ const editPost = async (req, res) => {
   }
 }
 
-// // delete post controller
+// // delete post service
 const deletePost = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -522,6 +661,7 @@ module.exports = {
   createPost,
   getData,
   getById,
+  getByTitle,
   getByUser,
   editPost,
   deletePost,
