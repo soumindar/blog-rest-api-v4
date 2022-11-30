@@ -23,7 +23,7 @@ router.get('/user/:username', postValidator.paramUsername, postValidator.queryDa
 router.post('/create', postValidator.createData, postService.createPost);
 
 // update post
-router.patch('/edit/:id', postValidator.paramId, postService.editPost);
+router.patch('/edit/:id', postValidator.paramId, postValidator.createData, postService.editPost);
 
 // delete post
 router.delete('/delete/:id', postValidator.paramId, postService.deletePost);

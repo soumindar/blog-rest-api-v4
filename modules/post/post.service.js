@@ -6,11 +6,13 @@ const extention = require('../../utils/get.extention');
 const getBaseUrl = require('../../utils/get.base.url');
 const userLog = require('../../utils/user-log');
 const redisClient = require('../../config/redis.config');
+const fs = require('fs');
 
 // get data service
 const getData = async (req, res) => {
   try {
     const { page_size, page, search, category, start_date, end_date, order_by, order } = req.query;
+    const userId = req.user.id;
 
     const limit = Number(page_size ?? 10);
     const pages = Number(page ?? 1);
@@ -98,7 +100,7 @@ const getData = async (req, res) => {
       ...post,
       createdAt: moment(post.createdAt).tz(userTimezone).format(),
       updatedAt: (!post.updatedAt) ? null : moment(post.updatedAt).tz(userTimezone).format(),
-      images: (!post.images) ? baseUrl + '/images/no-image.jpeg' : baseUrl + '/images/' + post.images
+      images: (!post.images) ? `${baseUrl}/images/post/no-image.jpeg` : `${baseUrl}/images/post/${userId}/${post.images}`,
     }));
     
     const getTotalData = await prisma.post.aggregate({
@@ -132,6 +134,7 @@ const getData = async (req, res) => {
 const getById = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user.id;
 
     let isCahced = false;
     let getPost;
@@ -185,7 +188,7 @@ const getById = async (req, res) => {
       ...getPost,
       createdAt: moment(getPost.created_at).tz(userTimezone).format(),
       updatedAt: (!getPost.updatedAt) ? null : moment(getPost.updatedAt).tz(userTimezone).format(),
-      images: (!getPost.images) ? baseUrl + '/images/no-image.jpeg' : baseUrl + '/images/' + getPost.images
+      images: (!getPost.images) ? `${baseUrl}/images/post/no-image.jpeg` : `${baseUrl}/images/post/${userId}/${getPost.images}`,
     };
 
     return res.status(200).json({
@@ -207,6 +210,7 @@ const getById = async (req, res) => {
 const getByTitle = async (req, res) => {
   try {
     const { slug } = req.params;
+    const userId = req.user.id;
 
     let isCahced = false;
     let getPost;
@@ -260,7 +264,7 @@ const getByTitle = async (req, res) => {
       ...getPost,
       createdAt: moment(getPost.created_at).tz(userTimezone).format(),
       updatedAt: (!getPost.updatedAt) ? null : moment(getPost.updatedAt).tz(userTimezone).format(),
-      images: (!getPost.images) ? baseUrl + '/images/no-image.jpeg' : baseUrl + '/images/' + getPost.images
+      images: (!getPost.images) ? `${baseUrl}/images/post/no-image.jpeg` : `${baseUrl}/images/post/${userId}/${getPost.images}`,
     };
 
     return res.status(200).json({
@@ -283,6 +287,7 @@ const getByUser = async (req, res) => {
   try {
     const { username } = req.params;
     const { page_size, page, search, category, start_date, end_date, order_by, order } = req.query;
+    const userId = req.user.id;
 
     const limit = Number(page_size ?? 10);
     const pages = Number(page ?? 1);
@@ -388,7 +393,7 @@ const getByUser = async (req, res) => {
       ...post,
       createdAt: moment(post.createdAt).tz(userTimezone).format(),
       updatedAt: (!post.updatedAt) ? null : moment(post.updatedAt).tz(userTimezone).format(),
-      images: (!post.images) ? baseUrl + '/images/no-image.jpeg' : baseUrl + '/images/' + post.images
+      images: (!post.images) ? `${baseUrl}/images/post/no-image.jpeg` : `${baseUrl}/images/post/${userId}/${post.images}`,
     }));
 
     const getTotalData = await prisma.post.aggregate({
@@ -467,10 +472,15 @@ const createPost = async (req, res) => {
     if (req.files) {
       const imageFile = req.files.image;
       fileName =  Date.now() + extention.getExt(imageFile.name);
-      const uploadPath = __basedir + '/public/images/' + fileName;
+      let uploadPath = `${__basedir}/public/images/post/${userId}`;
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath);
+      }
+
+      uploadPath += `/${fileName}`;
       imageFile.mv(uploadPath, function(err) {
         if (err) {
-          return res.status(500).send(err);
+          throw err;
         }
       });
     }
@@ -514,7 +524,10 @@ const editPost = async (req, res) => {
     const checkPost = await prisma.post.findFirst({
       select: {
         id: true,
-        userId: true
+        userId: true,
+        title: true,
+        slug: true,
+        images: true,
       },
       where: {
         id: postId,
@@ -545,41 +558,56 @@ const editPost = async (req, res) => {
       });
     }
 
-    let fileName = null;
+    let fileName = checkPost.images;
     if (req.files) {
       const imageFile = req.files.image;
       fileName =  Date.now() + extention.getExt(imageFile.name);
-      const uploadPath = __basedir + '/public/images/' + fileName;
+      let uploadPath = `${__basedir}/public/images/post/${userId}`;
+      
+      if (checkPost.images) {
+        fs.unlinkSync(`${uploadPath}/${checkPost.images}`);
+      }
+
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath);
+      }
+
+      uploadPath += `/${fileName}`;
       imageFile.mv(uploadPath, function(err) {
         if (err) {
-          return res.status(500).send(err);
+          throw err;
         }
       });
     } 
 
-    let slug = title.toLowerCase().replace(/\W+/g, '-');
-    const slugExist = await prisma.slug.findFirst({
-      select: { counter: true },
-      where: { slug: slug },
-    });
-    if (slugExist) {
-      const counterNow = slugExist.counter + 1
-      await prisma.slug.update({
-        data: {
-          counter: counterNow,
-        },
-        where: {
-          slug: slug,
-        },
-      });
-      slug = slug + '-' + counterNow;
+    let slug;
+    if (title == checkPost.title) {
+      slug = checkPost.slug;
     } else {
-      await prisma.slug.create({
-        data: {
-          slug: slug,
-          counter: 1,
-        }
+      slug = title.toLowerCase().replace(/\W+/g, '-');
+      const slugExist = await prisma.slug.findFirst({
+        select: { counter: true },
+        where: { slug: slug },
       });
+      if (slugExist) {
+        const counterNow = slugExist.counter + 1
+        await prisma.slug.update({
+          data: {
+            counter: counterNow,
+          },
+          where: {
+            slug: slug,
+          },
+        });
+        slug = slug + '-' + counterNow;
+      } else {
+        await prisma.slug.create({
+          data: {
+            slug: slug,
+            counter: 1,
+          }
+        });
+      }
     }
 
     const updateData = await prisma.post.update({
