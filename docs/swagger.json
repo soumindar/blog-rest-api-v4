@@ -4,7 +4,9 @@
     "title": "Blog REST API",
     "description": "A REST API for running blog-like processes. This API can be used for CRUD processes on user, post, and category. This API is created using Express framework on Node.JS. This API is an improvement from the previous version where in this API PostgreSQL is used as a main database and MongoDB is used as a log database.\n\nSome useful links:\n- [The Blog REST API repository](https://github.com/soumindar/blog-rest-api-v4.git)",
     "contact": {
-      "email": "soumindarqolby@gmail.com"
+      "name": "Soumindar Qolby",
+      "email": "soumindarqolby@gmail.com",
+      "url": "https://www.linkedin.com/in/soumindar-qolby/"
     },
     "version": "4.0.0"
   },
@@ -44,7 +46,21 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Register"
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "soumindar qolby"
+                  },
+                  "username": {
+                    "type": "string",
+                    "example": "sou"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "sou123"
+                  }
+                }
               }
             }
           },
@@ -74,7 +90,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Login"
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "example": "sou"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "sou123"
+                  }
+                }
               }
             }
           },
@@ -122,6 +148,16 @@
           }
         ],
         "summary": "Get user's own data",
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success"
@@ -211,7 +247,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateUser"
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "soumindar"
+                  },
+                  "username": {
+                    "type": "string",
+                    "example": "sou"
+                  }
+                }
               }
             }
           },
@@ -220,6 +266,40 @@
         "responses": {
           "200": {
             "description": "Update success"
+          }
+        }
+      }
+    },
+    "/users/change-avatar": {
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Update user's data",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "avatar": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Change avatar success"
           }
         }
       }
@@ -239,7 +319,21 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ChangePassword"
+                "type": "object",
+                "properties": {
+                  "old_pass": {
+                    "type": "string",
+                    "example": "sou123"
+                  },
+                  "new_pass": {
+                    "type": "string",
+                    "example": "sou1234"
+                  },
+                  "confirm_pass": {
+                    "type": "string",
+                    "example": "sou1234"
+                  }
+                }
               }
             }
           },
@@ -373,6 +467,27 @@
         }
       }
     },
+    "/post/title/{slug}": {
+      "get": {
+        "tags": [
+          "post"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get post by title",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "404": {
+            "description": "Post not found"
+          }
+        }
+      }
+    },
     "/post/user/{username}": {
       "get": {
         "tags": [
@@ -467,7 +582,25 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/CreatePost"
+                "type": "object",
+                "properties": {
+                  "category_id": {
+                    "type": "string",
+                    "example": "5eaee21c-5ecf-4a01-8acf-657098e768be"
+                  },
+                  "title": {
+                    "type": "string",
+                    "example": "Popular Games 2022"
+                  },
+                  "content": {
+                    "type": "string",
+                    "example": "Valorant, PUBG, Mobile Legends"
+                  },
+                  "image": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
               }
             }
           },
@@ -498,7 +631,25 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/EditPost"
+                "type": "object",
+                "properties": {
+                  "category_id": {
+                    "type": "string",
+                    "example": "5eaee21c-5ecf-4a01-8acf-657098e768be"
+                  },
+                  "title": {
+                    "type": "string",
+                    "example": "Popular Games 2022"
+                  },
+                  "content": {
+                    "type": "string",
+                    "example": "Valorant, PUBG, Mobile Legends"
+                  },
+                  "image": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
               }
             }
           },
@@ -518,7 +669,7 @@
       }
     },
     "/post/delete/{id}": {
-      "patch": {
+      "delete": {
         "tags": [
           "post"
         ],
@@ -563,110 +714,6 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT"
-      }
-    },
-    "schemas": {
-      "Register": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "example": "soumindar qolby"
-          },
-          "username": {
-            "type": "string",
-            "example": "sou"
-          },
-          "password": {
-            "type": "string",
-            "example": "sou123"
-          }
-        }
-      },
-      "Login": {
-        "type": "object",
-        "properties": {
-          "username": {
-            "type": "string",
-            "example": "sou"
-          },
-          "password": {
-            "type": "string",
-            "example": "sou123"
-          }
-        }
-      },
-      "UpdateUser": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "example": "soumindar"
-          },
-          "username": {
-            "type": "string",
-            "example": "sou"
-          }
-        }
-      },
-      "ChangePassword": {
-        "type": "object",
-        "properties": {
-          "old_pass": {
-            "type": "string",
-            "example": "sou123"
-          },
-          "new_pass": {
-            "type": "string",
-            "example": "sou1234"
-          },
-          "confirm_pass": {
-            "type": "string",
-            "example": "sou1234"
-          }
-        }
-      },
-      "CreatePost": {
-        "type": "object",
-        "properties": {
-          "category_id": {
-            "type": "string",
-            "example": "5eaee21c-5ecf-4a01-8acf-657098e768be"
-          },
-          "title": {
-            "type": "string",
-            "example": "Popular Games 2022"
-          },
-          "content": {
-            "type": "string",
-            "example": "Valorant, PUBG, Mobile Legends"
-          },
-          "image": {
-            "type": "string",
-            "format": "binary"
-          }
-        }
-      },
-      "EditPost": {
-        "type": "object",
-        "properties": {
-          "category_id": {
-            "type": "string",
-            "example": "5eaee21c-5ecf-4a01-8acf-657098e768be"
-          },
-          "title": {
-            "type": "string",
-            "example": "Popular Games 2022"
-          },
-          "content": {
-            "type": "string",
-            "example": "Valorant, PUBG, Mobile Legends"
-          },
-          "image": {
-            "type": "string",
-            "format": "binary"
-          }
-        }
       }
     }
   }
