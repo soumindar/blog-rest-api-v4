@@ -165,7 +165,7 @@ const getById = async (req, res) => {
     const baseUrl = getBaseUrl(req);
     const data = {
       ...user,
-      avatar: (!user.avatar) ? `${baseUrl}/images/avatar/no-avatar.jpeg` : `${baseUrl}/images/avatar/${userId}/${user.avatar}`,
+      avatar: (!user.avatar) ? `${baseUrl}/images/avatar/no-avatar.jpeg` : `${baseUrl}/images/avatar/${id}/${user.avatar}`,
       createdAt: moment(user.createdAt).tz(userTimezone).format(),
       updatedAt: (!user.updatedAt) ? null : moment(user.updatedAt).tz(userTimezone).format(),
     };
@@ -308,7 +308,7 @@ const changeAvatar = async (req, res) => {
       },
       where: { id: userId },
     });
-
+    
     return res.status(200).json({
       message: 'change avatar success',
       statusCode: 200,
