@@ -188,6 +188,7 @@ const getById = async (req, res) => {
 const getByUsername = async (req, res) => {
   try {
     const { username } = req.params;
+    const userId = req.user.id;
     
     const user = await prisma.users.findFirst({
       select: {
