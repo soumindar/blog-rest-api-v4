@@ -28,6 +28,7 @@
     "prisma": "^4.6.1",
     "redis": "^4.5.1",
     "rotating-file-stream": "^3.0.4",
+    "sharp": "^0.31.2",
     "swagger-ui-express": "^4.6.0"
   }
 }

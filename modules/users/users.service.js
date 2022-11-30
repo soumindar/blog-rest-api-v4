@@ -7,6 +7,7 @@ const userLog = require('../../utils/user-log');
 const extention = require('../../utils/get.extention');
 const getBaseUrl = require('../../utils/get.base.url');
 const fs = require('fs');
+const sharp = require('sharp');
 
 // get user data service
 const getData = async (req, res) => {
@@ -283,18 +284,23 @@ const changeAvatar = async (req, res) => {
     const userId = req.user.id;
 
     const avatarFile = req.files.avatar;
-    const fileName =  `${userId}${extention.getExt(avatarFile.name)}`;
+    const allowExt = ['.jpg', '.jpeg', 'png'];
+    const avatarExt = extention.getExt(avatarFile.name);
+    if (!allowExt.includes(avatarExt)) {
+      return res.status(422).json({
+        message: 'Invalid avatar format. Allowed format: .jpg, .jpeg, .png',
+        statusCode: 422,
+      });
+    }
+
+    const fileName =  `${userId}${avatarExt}`;
     let uploadPath = `${__basedir}/public/images/avatar/${userId}`;
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath);
     }
 
     uploadPath += `/${fileName}`;
-    avatarFile.mv(uploadPath, (err) => {
-      if (err) {
-        throw err;
-      }
-    });
+    await sharp(avatarFile.data).resize(400, 400).toFile(uploadPath);
 
     await prisma.users.update({
       data: {
