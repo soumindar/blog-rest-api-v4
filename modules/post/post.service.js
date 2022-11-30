@@ -7,6 +7,8 @@ const getBaseUrl = require('../../utils/get.base.url');
 const userLog = require('../../utils/user-log');
 const redisClient = require('../../config/redis.config');
 const fs = require('fs');
+const sharp = require('sharp');
+const sizeOf = require('buffer-image-size');
 
 // get data service
 const getData = async (req, res) => {
@@ -471,18 +473,37 @@ const createPost = async (req, res) => {
     let fileName = null;
     if (req.files) {
       const imageFile = req.files.image;
-      fileName =  Date.now() + extention.getExt(imageFile.name);
+      const allowExt = ['.jpg', '.jpeg', 'png'];
+      const imageExt = extention.getExt(imageFile.name);
+      if (!allowExt.includes(imageExt)) {
+        return res.status(422).json({
+          message: 'Invalid image format. Allowed format: .jpg, .jpeg, .png',
+          statusCode: 422,
+        });
+      }
+
+      const dimension = sizeOf(imageFile.data);
+      const maxWidth = 1000;
+      const maxHeight = 1000;
+      let widthNow = dimension.width;
+      let heightNow = dimension.height;
+      if (widthNow >= maxWidth) {
+        widthNow = maxWidth;
+        heightNow = Math.ceil((dimension.height / dimension.width) * widthNow);
+      }
+      if (heightNow >= maxHeight) {
+        heightNow = maxHeight;
+        widthNow = Math.ceil((dimension.width / dimension.height) * heightNow);
+      }
+
+      fileName =  Date.now() + imageExt;
       let uploadPath = `${__basedir}/public/images/post/${userId}`;
       if (!fs.existsSync(uploadPath)) {
         fs.mkdirSync(uploadPath);
       }
 
       uploadPath += `/${fileName}`;
-      imageFile.mv(uploadPath, function(err) {
-        if (err) {
-          throw err;
-        }
-      });
+      await sharp(imageFile.data).resize(widthNow, heightNow).toFile(uploadPath);
     }
     
     const createData = await prisma.post.create({
@@ -561,23 +582,39 @@ const editPost = async (req, res) => {
     let fileName = checkPost.images;
     if (req.files) {
       const imageFile = req.files.image;
-      fileName =  Date.now() + extention.getExt(imageFile.name);
-      let uploadPath = `${__basedir}/public/images/post/${userId}`;
-      
-      if (checkPost.images) {
-        fs.unlinkSync(`${uploadPath}/${checkPost.images}`);
+      const allowExt = ['.jpg', '.jpeg', 'png'];
+      const imageExt = extention.getExt(imageFile.name);
+      if (!allowExt.includes(imageExt)) {
+        return res.status(422).json({
+          message: 'Invalid image format. Allowed format: .jpg, .jpeg, .png',
+          statusCode: 422,
+        });
       }
 
+      const dimension = sizeOf(imageFile.data);
+      const maxWidth = 1000;
+      const maxHeight = 1000;
+      let widthNow = dimension.width;
+      let heightNow = dimension.height;
+      if (widthNow >= maxWidth) {
+        widthNow = maxWidth;
+        heightNow = Math.ceil((dimension.height / dimension.width) * widthNow);
+      }
+      if (heightNow >= maxHeight) {
+        heightNow = maxHeight;
+        widthNow = Math.ceil((dimension.width / dimension.height) * heightNow);
+      }
+
+      fileName =  Date.now() + imageExt;
+      let uploadPath = `${__basedir}/public/images/post/${userId}`;
+      if (checkPost.images && fs.existsSync(`${uploadPath}/${checkPost.images}`)) {
+        fs.unlinkSync(`${uploadPath}/${checkPost.images}`);
+      }
       if (!fs.existsSync(uploadPath)) {
         fs.mkdirSync(uploadPath);
       }
-
       uploadPath += `/${fileName}`;
-      imageFile.mv(uploadPath, function(err) {
-        if (err) {
-          throw err;
-        }
-      });
+      await sharp(imageFile.data).resize(widthNow, heightNow).toFile(uploadPath);
     } 
 
     let slug;
