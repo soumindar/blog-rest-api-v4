@@ -148,16 +148,6 @@
           }
         ],
         "summary": "Get user's own data",
-        "parameters": [
-          {
-            "name": "Origin",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Success"
@@ -359,7 +349,7 @@
             "bearerAuth": []
           }
         ],
-        "summary": "Delete user",
+        "summary": "Delete user's own account",
         "responses": {
           "200": {
             "description": "Delete success"
@@ -454,6 +444,17 @@
           }
         ],
         "summary": "Get post by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Post ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success"
@@ -478,6 +479,17 @@
           }
         ],
         "summary": "Get post by title",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "Slug of the title",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success"
@@ -500,6 +512,14 @@
         ],
         "summary": "Get post by username",
         "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "page_size",
             "in": "query",
@@ -627,6 +647,17 @@
           }
         ],
         "summary": "Edit post by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Post ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -679,6 +710,17 @@
           }
         ],
         "summary": "Delete post by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Post ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Delete success"
