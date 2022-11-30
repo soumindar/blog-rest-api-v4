@@ -25,6 +25,9 @@ router.get('/username/:username', usersValidator.username, usersService.getByUse
 // update user data
 router.patch('/update', usersValidator.updateData, usersService.updateUser);
 
+// change avatar
+router.post('/change-avatar', usersValidator.avatar, usersService.changeAvatar);
+
 // change password
 router.patch('/change-password', usersValidator.newPass, usersService.changePass);
 

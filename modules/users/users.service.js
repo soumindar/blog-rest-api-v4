@@ -4,8 +4,11 @@ const bcrypt = require('bcrypt');
 const moment = require('moment-timezone');
 const userTimezone = require('../../config/timezone.config');
 const userLog = require('../../utils/user-log');
+const extention = require('../../utils/get.extention');
+const getBaseUrl = require('../../utils/get.base.url');
+const fs = require('fs');
 
-// get user data controller
+// get user data service
 const getData = async (req, res) => {
   try {
     const userId = req.user.id;    
@@ -15,14 +18,17 @@ const getData = async (req, res) => {
         id: true,
         name: true,
         username: true,
+        avatar: true,
         createdAt: true,
         updatedAt: true,
       },
       where: { id: userId },
     });
     
+    const baseUrl = getBaseUrl(req);
     const data = {
       ...user,
+      avatar: (!user.avatar) ? `${baseUrl}/images/avatar/no-avatar.jpeg` : `${baseUrl}/images/avatar/${userId}/${user.avatar}`,
       createdAt: moment(user.createdAt).tz(userTimezone).format(),
       updatedAt: (!user.updatedAt) ? null : moment(user.updatedAt).tz(userTimezone).format(),
     };
@@ -71,7 +77,7 @@ const getLog = async (req, res) => {
   }
 }
 
-// get all users controller
+// get all users service
 const getAll = async (req, res) => {
   try {
     const { page_size, page } = req.query;
@@ -85,12 +91,22 @@ const getAll = async (req, res) => {
         id: true,
         name: true,
         username: true,
+        avatar: true,
       },
       where: { deleted: null },
       skip: offset,
       take: limit,
       orderBy: { name: 'asc' },
     });
+
+    const baseUrl = getBaseUrl(req);
+    const data = users.map(user => ({
+        ...user,
+        avatar: (!user.avatar) ? `${baseUrl}/images/avatar/no-avatar.jpeg` : `${baseUrl}/images/avatar/${userId}/${user.avatar}`,
+        createdAt: moment(user.createdAt).tz(userTimezone).format(),
+        updatedAt: (!user.updatedAt) ? null : moment(user.updatedAt).tz(userTimezone).format(),
+      })
+    );
 
     const getTotalData = await prisma.users.aggregate({
       _count: {id: true},
@@ -102,7 +118,7 @@ const getAll = async (req, res) => {
     return res.status(200).json({
       message: 'success',
       statusCode: 200,
-      data: users,
+      data: data,
       meta: {
         page_size: limit,
         page: pages,
@@ -119,7 +135,7 @@ const getAll = async (req, res) => {
   }
 }
 
-// get user by id controller
+// get user by id service
 const getById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -129,6 +145,7 @@ const getById = async (req, res) => {
         id: true,
         name: true,
         username: true,
+        avatar: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -143,8 +160,11 @@ const getById = async (req, res) => {
         statusCode: 404
       });
     }
-    const data =  {
+
+    const baseUrl = getBaseUrl(req);
+    const data = {
       ...user,
+      avatar: (!user.avatar) ? `${baseUrl}/images/avatar/no-avatar.jpeg` : `${baseUrl}/images/avatar/${userId}/${user.avatar}`,
       createdAt: moment(user.createdAt).tz(userTimezone).format(),
       updatedAt: (!user.updatedAt) ? null : moment(user.updatedAt).tz(userTimezone).format(),
     };
@@ -163,7 +183,7 @@ const getById = async (req, res) => {
   }
 };
 
-// get user by username controller
+// get user by username service
 const getByUsername = async (req, res) => {
   try {
     const { username } = req.params;
@@ -173,6 +193,7 @@ const getByUsername = async (req, res) => {
         id: true,
         name: true,
         username: true,
+        avatar: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -187,8 +208,11 @@ const getByUsername = async (req, res) => {
         statusCode: 404
       });
     }
-    const data =  {
+
+    const baseUrl = getBaseUrl(req);
+    const data = {
       ...user,
+      avatar: (!user.avatar) ? `${baseUrl}/images/avatar/no-avatar.jpeg` : `${baseUrl}/images/avatar/${userId}/${user.avatar}`,
       createdAt: moment(user.createdAt).tz(userTimezone).format(),
       updatedAt: (!user.updatedAt) ? null : moment(user.updatedAt).tz(userTimezone).format(),
     };
@@ -207,7 +231,7 @@ const getByUsername = async (req, res) => {
   }
 }
 
-// update user controller
+// update user service
 const updateUser = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -253,7 +277,46 @@ const updateUser = async (req, res) => {
   }
 }
 
-// change password controller
+// change avatar service
+const changeAvatar = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const avatarFile = req.files.avatar;
+    const fileName =  `${userId}${extention.getExt(avatarFile.name)}`;
+    let uploadPath = `${__basedir}/public/images/avatar/${userId}`;
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath);
+    }
+
+    uploadPath += `/${fileName}`;
+    avatarFile.mv(uploadPath, (err) => {
+      if (err) {
+        throw err;
+      }
+    });
+
+    await prisma.users.update({
+      data: {
+        avatar: fileName,
+      },
+      where: { id: userId },
+    });
+
+    return res.status(200).json({
+      message: 'change avatar success',
+      statusCode: 200,
+    });
+  } catch (error) {
+    req.error = error.message;
+    return res.status(500).json({
+      message: error.message,
+      statusCode: 500
+    });
+  }
+}
+
+// change password service
 const changePass = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -305,7 +368,7 @@ const changePass = async (req, res) => {
   }
 }
 
-// delete user controller
+// delete user service
 const deleteUser = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -339,6 +402,7 @@ module.exports = {
   getById,
   getByUsername,
   updateUser,
+  changeAvatar,
   changePass,
   deleteUser,
 }

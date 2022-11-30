@@ -76,9 +76,34 @@ const newPass = [
   }
 ];
 
+// change avatar validator
+const avatar = [
+  check('avatar')
+    .custom((_value, { req }) => {
+      if (!req.files['avatar']) {
+        return false;
+      }
+      return true;
+    })
+    .withMessage('avatar cannot be empty'),
+  (req, res, next) => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        message: errors.array(),
+        statusCode: 400,
+      });
+    }
+
+    next();
+  }
+];
+
 module.exports = {
   paramId,
   username,
   updateData,
   newPass,
+  avatar,
 };
