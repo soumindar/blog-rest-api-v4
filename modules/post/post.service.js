@@ -473,7 +473,7 @@ const createPost = async (req, res) => {
     let fileName = null;
     if (req.files) {
       const imageFile = req.files.image;
-      const allowExt = ['.jpg', '.jpeg', 'png'];
+      const allowExt = ['.jpg', '.jpeg', '.png'];
       const imageExt = extention.getExt(imageFile.name);
       if (!allowExt.includes(imageExt)) {
         return res.status(422).json({
@@ -582,7 +582,7 @@ const editPost = async (req, res) => {
     let fileName = checkPost.images;
     if (req.files) {
       const imageFile = req.files.image;
-      const allowExt = ['.jpg', '.jpeg', 'png'];
+      const allowExt = ['.jpg', '.jpeg', '.png'];
       const imageExt = extention.getExt(imageFile.name);
       if (!allowExt.includes(imageExt)) {
         return res.status(422).json({

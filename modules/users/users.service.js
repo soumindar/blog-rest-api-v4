@@ -285,7 +285,7 @@ const changeAvatar = async (req, res) => {
     const userId = req.user.id;
 
     const avatarFile = req.files.avatar;
-    const allowExt = ['.jpg', '.jpeg', 'png'];
+    const allowExt = ['.jpg', '.jpeg', '.png'];
     const avatarExt = extention.getExt(avatarFile.name);
     if (!allowExt.includes(avatarExt)) {
       return res.status(422).json({
@@ -312,7 +312,7 @@ const changeAvatar = async (req, res) => {
     
     const baseUrl = getBaseUrl(req);
     const avatarUrl = `${baseUrl}/images/avatar/${userId}/${fileName}`;
-    
+
     return res.status(200).json({
       message: 'change avatar success',
       statusCode: 200,
