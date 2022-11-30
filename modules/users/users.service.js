@@ -189,7 +189,7 @@ const getByUsername = async (req, res) => {
   try {
     const { username } = req.params;
     const userId = req.user.id;
-    
+
     const user = await prisma.users.findFirst({
       select: {
         id: true,
@@ -310,9 +310,15 @@ const changeAvatar = async (req, res) => {
       where: { id: userId },
     });
     
+    const baseUrl = getBaseUrl(req);
+    const avatarUrl = `${baseUrl}/images/avatar/${userId}/${fileName}`;
+    
     return res.status(200).json({
       message: 'change avatar success',
       statusCode: 200,
+      data: {
+        avatar: avatarUrl,
+      }
     });
   } catch (error) {
     req.error = error.message;
