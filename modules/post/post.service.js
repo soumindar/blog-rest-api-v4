@@ -188,7 +188,7 @@ const getById = async (req, res) => {
     const baseUrl = getBaseUrl(req);
     const postData = {
       ...getPost,
-      createdAt: moment(getPost.created_at).tz(userTimezone).format(),
+      createdAt: moment(getPost.createdAt).tz(userTimezone).format(),
       updatedAt: (!getPost.updatedAt) ? null : moment(getPost.updatedAt).tz(userTimezone).format(),
       images: (!getPost.images) ? `${baseUrl}/images/post/no-image.jpeg` : `${baseUrl}/images/post/${userId}/${getPost.images}`,
     };
@@ -264,7 +264,7 @@ const getByTitle = async (req, res) => {
     const baseUrl = getBaseUrl(req);
     const postData = {
       ...getPost,
-      createdAt: moment(getPost.created_at).tz(userTimezone).format(),
+      createdAt: moment(getPost.createdAt).tz(userTimezone).format(),
       updatedAt: (!getPost.updatedAt) ? null : moment(getPost.updatedAt).tz(userTimezone).format(),
       images: (!getPost.images) ? `${baseUrl}/images/post/no-image.jpeg` : `${baseUrl}/images/post/${userId}/${getPost.images}`,
     };
@@ -513,7 +513,7 @@ const createPost = async (req, res) => {
       await compressedImg.toFile(uploadPath);
     }
     
-    const createData = await prisma.post.create({
+    let createData = await prisma.post.create({
       data: {
         userId,
         categoryId: category_id,
@@ -523,6 +523,14 @@ const createPost = async (req, res) => {
         images: fileName,
       }
     });
+
+    const baseUrl = getBaseUrl(req);
+    createData = {
+      ...createData,
+      createdAt: moment(createData.createdAt).tz(userTimezone).format(),
+      updatedAt: (!createData.updatedAt) ? null : moment(createData.updatedAt).tz(userTimezone).format(),
+      images: (!createData.images) ? `${baseUrl}/images/post/no-image.jpeg` : `${baseUrl}/images/post/${userId}/${createData.images}`,
+    };
 
     await userLog.createLog(userId, `create post ${createData.id}`);
 
@@ -663,7 +671,7 @@ const editPost = async (req, res) => {
       }
     }
 
-    const updateData = await prisma.post.update({
+    let updateData = await prisma.post.update({
       data: {
         categoryId: category_id,
         title,
@@ -674,11 +682,20 @@ const editPost = async (req, res) => {
       where: { id: postId },
     });
 
-    await userLog.createLog(userId, `edit post ${updateData.id}`)
+    const baseUrl = getBaseUrl(req);
+    updateData = {
+      ...updateData,
+      createdAt: moment(updateData.createdAt).tz(userTimezone).format(),
+      updatedAt: (!updateData.updatedAt) ? null : moment(updateData.updatedAt).tz(userTimezone).format(),
+      images: (!updateData.images) ? `${baseUrl}/images/post/no-image.jpeg` : `${baseUrl}/images/post/${userId}/${updateData.images}`,
+    };
+
+    await userLog.createLog(userId, `edit post ${updateData.id}`);
+
     return res.status(200).json({
       message: 'update success',
       statusCode: 200,
-      data: updateData
+      data: updateData,
     });
   } catch (error) {
     req.error = error.message;
