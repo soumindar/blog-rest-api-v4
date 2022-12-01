@@ -294,7 +294,6 @@ const changeAvatar = async (req, res) => {
       });
     }
 
-    const fileName =  Date.now() + avatarExt;
     let uploadPath = `${__basedir}/public/images/avatar/${userId}`;
     const avatarExist = await prisma.users.findUnique({
       select: { avatar: true },
@@ -306,8 +305,17 @@ const changeAvatar = async (req, res) => {
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath);
     }
+
+    const compressConfig = {
+      lossless: true,
+      quality: 60,
+      alphaQuality: 80,
+    }
+    const image = await sharp(avatarFile.data).toFormat('jpeg').jpeg(compressConfig).resize(1000, 1000);
+
+    const fileName =  Date.now() + avatarExt;
     uploadPath += `/${fileName}`;
-    await sharp(avatarFile.data).resize(400, 400).toFile(uploadPath);
+    await image.toFile(uploadPath);
 
     await prisma.users.update({
       data: {
