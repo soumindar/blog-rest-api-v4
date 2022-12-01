@@ -294,12 +294,18 @@ const changeAvatar = async (req, res) => {
       });
     }
 
-    const fileName =  `${userId}${avatarExt}`;
+    const fileName =  Date.now() + avatarExt;
     let uploadPath = `${__basedir}/public/images/avatar/${userId}`;
+    const avatarExist = await prisma.users.findUnique({
+      select: { avatar: true },
+      where: { id: userId },
+    });
+    if (avatarExist.avatar && fs.existsSync(`${uploadPath}/${avatarExist.avatar}`)) {
+      fs.unlinkSync(`${uploadPath}/${avatarExist.avatar}`);
+    }
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath);
     }
-
     uploadPath += `/${fileName}`;
     await sharp(avatarFile.data).resize(400, 400).toFile(uploadPath);
 
