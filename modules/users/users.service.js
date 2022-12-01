@@ -103,7 +103,7 @@ const getAll = async (req, res) => {
     const baseUrl = getBaseUrl(req);
     const data = users.map(user => ({
         ...user,
-        avatar: (!user.avatar) ? `${baseUrl}/images/avatar/no-avatar.jpeg` : `${baseUrl}/images/avatar/${userId}/${user.avatar}`,
+        avatar: (!user.avatar) ? `${baseUrl}/images/avatar/no-avatar.jpeg` : `${baseUrl}/images/avatar/${user.id}/${user.avatar}`,
         createdAt: moment(user.createdAt).tz(userTimezone).format(),
         updatedAt: (!user.updatedAt) ? null : moment(user.updatedAt).tz(userTimezone).format(),
       })
