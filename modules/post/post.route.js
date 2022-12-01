@@ -7,8 +7,11 @@ const postService = require('./post.service');
 // use jwt verification
 router.use(jwtVerify);
 
-// get data
-router.get('/', postValidator.queryData, postService.getData);
+// get all
+router.get('/', postValidator.queryData, postService.getAll);
+
+// get all optimized
+router.get('/op', postValidator.queryDataOp, postService.getAllOp);
 
 // get by id
 router.get('/id/:id', postValidator.paramId, postService.getById);

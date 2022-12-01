@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const moment = require('moment-timezone');
+const momentTz = require('moment-timezone');
+const moment = require('moment');
 const userTimezone = require('../../config/timezone.config');
 const extention = require('../../utils/get.extention');
 const getBaseUrl = require('../../utils/get.base.url');
@@ -10,8 +11,8 @@ const fs = require('fs');
 const sharp = require('sharp');
 const sizeOf = require('buffer-image-size');
 
-// get data service
-const getData = async (req, res) => {
+// get all service
+const getAll = async (req, res) => {
   try {
     const { page_size, page, search, category, start_date, end_date, order_by, order } = req.query;
     const userId = req.user.id;
@@ -21,8 +22,8 @@ const getData = async (req, res) => {
     const offset = Number((pages - 1) * limit);
     const searchKey = (!search) ? '' : `${search.replace('%', ' ')}`;
     const categoryKey = category ?? '';
-    const startDate = (start_date) ? new Date(start_date).setHours(0, 0, 0, 0) : null;
-    const endDate = (end_date) ? new Date(end_date).setHours(23, 59, 59, 999) : null;
+    const startDate = (start_date) ? new Date(start_date).setHours(23, 59, 59, 999) : null;
+    const endDate = (end_date) ? new Date(end_date).setHours(0, 0, 0, 0) : null;
     const orderBy = order_by ?? 'createdAt';
     const orderKey = order ?? 'desc';
     
@@ -96,15 +97,15 @@ const getData = async (req, res) => {
       }
     }
     const getPost = await prisma.post.findMany(queryObj);
-    
+
     const baseUrl = getBaseUrl(req);
     const postData = getPost.map(post => ({
       ...post,
-      createdAt: moment(post.createdAt).tz(userTimezone).format(),
-      updatedAt: (!post.updatedAt) ? null : moment(post.updatedAt).tz(userTimezone).format(),
+      createdAt: momentTz(post.createdAt).tz(userTimezone).format(),
+      updatedAt: (!post.updatedAt) ? null : momentTz(post.updatedAt).tz(userTimezone).format(),
       images: (!post.images) ? `${baseUrl}/images/post/no-image.jpeg` : `${baseUrl}/images/post/${userId}/${post.images}`,
     }));
-    
+
     const getTotalData = await prisma.post.aggregate({
       _count: { id: true },
       where: queryObj.where,
@@ -188,8 +189,8 @@ const getById = async (req, res) => {
     const baseUrl = getBaseUrl(req);
     const postData = {
       ...getPost,
-      createdAt: moment(getPost.createdAt).tz(userTimezone).format(),
-      updatedAt: (!getPost.updatedAt) ? null : moment(getPost.updatedAt).tz(userTimezone).format(),
+      createdAt: momentTz(getPost.createdAt).tz(userTimezone).format(),
+      updatedAt: (!getPost.updatedAt) ? null : momentTz(getPost.updatedAt).tz(userTimezone).format(),
       images: (!getPost.images) ? `${baseUrl}/images/post/no-image.jpeg` : `${baseUrl}/images/post/${userId}/${getPost.images}`,
     };
 
@@ -264,8 +265,8 @@ const getByTitle = async (req, res) => {
     const baseUrl = getBaseUrl(req);
     const postData = {
       ...getPost,
-      createdAt: moment(getPost.createdAt).tz(userTimezone).format(),
-      updatedAt: (!getPost.updatedAt) ? null : moment(getPost.updatedAt).tz(userTimezone).format(),
+      createdAt: momentTz(getPost.createdAt).tz(userTimezone).format(),
+      updatedAt: (!getPost.updatedAt) ? null : momentTz(getPost.updatedAt).tz(userTimezone).format(),
       images: (!getPost.images) ? `${baseUrl}/images/post/no-image.jpeg` : `${baseUrl}/images/post/${userId}/${getPost.images}`,
     };
 
@@ -296,8 +297,8 @@ const getByUser = async (req, res) => {
     const offset = Number((pages - 1) * limit);
     const searchKey = (!search) ? '' : `${search.replace('%', ' ')}`;
     const categoryKey = category ?? '';
-    const startDate = (start_date) ? new Date(start_date).setHours(0, 0, 0, 0) : null;
-    const endDate = (end_date) ? new Date(end_date).setHours(23, 59, 59, 999) : null;
+    const startDate = (start_date) ? new Date(start_date).setHours(23, 59, 59, 999) : null;
+    const endDate = (end_date) ? new Date(end_date).setHours(0, 0, 0, 0) : null;
     const orderBy = order_by ?? 'createdAt';
     const orderKey = order ?? 'desc';
 
@@ -393,8 +394,8 @@ const getByUser = async (req, res) => {
     const baseUrl = getBaseUrl(req);
     const postData = getPost.map(post => ({
       ...post,
-      createdAt: moment(post.createdAt).tz(userTimezone).format(),
-      updatedAt: (!post.updatedAt) ? null : moment(post.updatedAt).tz(userTimezone).format(),
+      createdAt: momentTz(post.createdAt).tz(userTimezone).format(),
+      updatedAt: (!post.updatedAt) ? null : momentTz(post.updatedAt).tz(userTimezone).format(),
       images: (!post.images) ? `${baseUrl}/images/post/no-image.jpeg` : `${baseUrl}/images/post/${userId}/${post.images}`,
     }));
 
@@ -527,8 +528,8 @@ const createPost = async (req, res) => {
     const baseUrl = getBaseUrl(req);
     createData = {
       ...createData,
-      createdAt: moment(createData.createdAt).tz(userTimezone).format(),
-      updatedAt: (!createData.updatedAt) ? null : moment(createData.updatedAt).tz(userTimezone).format(),
+      createdAt: momentTz(createData.createdAt).tz(userTimezone).format(),
+      updatedAt: (!createData.updatedAt) ? null : momentTz(createData.updatedAt).tz(userTimezone).format(),
       images: (!createData.images) ? `${baseUrl}/images/post/no-image.jpeg` : `${baseUrl}/images/post/${userId}/${createData.images}`,
     };
 
@@ -685,8 +686,8 @@ const editPost = async (req, res) => {
     const baseUrl = getBaseUrl(req);
     updateData = {
       ...updateData,
-      createdAt: moment(updateData.createdAt).tz(userTimezone).format(),
-      updatedAt: (!updateData.updatedAt) ? null : moment(updateData.updatedAt).tz(userTimezone).format(),
+      createdAt: momentTz(updateData.createdAt).tz(userTimezone).format(),
+      updatedAt: (!updateData.updatedAt) ? null : momentTz(updateData.updatedAt).tz(userTimezone).format(),
       images: (!updateData.images) ? `${baseUrl}/images/post/no-image.jpeg` : `${baseUrl}/images/post/${userId}/${updateData.images}`,
     };
 
@@ -755,12 +756,195 @@ const deletePost = async (req, res) => {
   }
 }
 
+// get all optimized service
+const getAllOp = async (req, res) => {
+  try {
+    const { page_size, search, category, start_date, end_date, order_by, order, last_data } = req.query;
+    const userId = req.user.id;
+
+    const limit = Number(page_size ?? 10);
+    const searchKey = (!search) ? '' : `${search.replace('%', ' ')}`;
+    const categoryKey = category ?? '';
+    const startDate = (start_date) ? new Date(moment(start_date).endOf('day').valueOf()) : new Date(moment().endOf('day').valueOf());
+    const endDate = (end_date) ? new Date(moment(end_date).startOf('day').valueOf()) : new Date(moment().startOf('month').valueOf());
+    const orderBy = order_by ?? 'createdAt';
+    const orderKey = order ?? 'desc';
+    
+    if (categoryKey) {
+      const categoryExist = await prisma.category.findUnique({
+        where: { category: categoryKey },
+      });
+      
+      if (!categoryExist) {
+        return res.status(404).json({
+          message: 'category not found',
+          statusCode: 404,
+          data: [],
+        });
+      }
+    }
+
+    let queryObj = {
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        contents: true,
+        images: true,
+        createdAt: true,
+        updatedAt: true,
+        category: {
+          select: {
+            id: true,
+            category: true,
+          }
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+          }
+        },
+      },
+      where: {
+        deleted: null,
+        OR: [
+          {
+            title: {
+              contains: searchKey,
+              mode: 'insensitive',
+            }
+          },
+          {
+            contents: {
+              contains: searchKey,
+              mode: 'insensitive',
+            }
+          }
+        ],
+      },
+      take: limit,
+      orderBy:{},
+    };
+
+    queryObj.orderBy[orderBy] = orderKey;
+    if (orderBy === 'createdAt') {
+      if (new Date(last_data).getTime() <= 0) {
+        return res.status(400).json({
+          message: 'last_data must be in timestamp format',
+          statusCode: 400,
+        });
+      }
+      if (orderKey === 'desc') {
+        const lastCreatedAt = (last_data) ? new Date(last_data) : startDate;
+        queryObj.where['createdAt'] = {
+          lt: lastCreatedAt,
+          gte: endDate,
+        };
+      } else {
+        const lastCreatedAt = (last_data) ? new Date(last_data) : endDate;
+        queryObj.where['createdAt'] = {
+          gt: lastCreatedAt,
+          lte: startDate,
+        };
+      }
+    } else if (orderBy === 'title') {
+      const getSlug = await prisma.post.aggregate({
+        _min: { slug: true },
+        _max: { slug: true },
+      });
+      const minSlug = getSlug._min.title;
+      const maxSlug = getSlug._max.title;
+      if (orderKey === 'desc') {
+        const lastSlug = last_data ?? maxSlug;
+        queryObj.where['slug'] = { lt: lastSlug };
+      } else {
+        const lastSlug = last_data ?? minSlug;
+        queryObj.where['slug'] = { gt: lastSlug };
+      }
+      queryObj.where['createdAt'] = {
+        lte: startDate,
+        gte: endDate,
+      };
+    }
+
+    if (categoryKey) {
+      queryObj.where['category'] = { category: categoryKey };
+    }
+
+    const getPost = await prisma.post.findMany(queryObj);
+
+    let lastData = null;
+    if (getPost.length > 0) {
+      if (orderBy === 'createdAt') {
+        lastData = getPost[getPost.length - 1].createdAt;
+      } else {
+        lastData = getPost[getPost.length - 1].slug;
+      }
+    }
+
+    const baseUrl = getBaseUrl(req);
+    const postData = getPost.map(post => ({
+      ...post,
+      createdAt: momentTz(post.createdAt).tz(userTimezone).format(),
+      updatedAt: (!post.updatedAt) ? null : momentTz(post.updatedAt).tz(userTimezone).format(),
+      images: (!post.images) ? `${baseUrl}/images/post/no-image.jpeg` : `${baseUrl}/images/post/${userId}/${post.images}`,
+    }));
+    
+    let totalWhereObj;
+    if (orderBy === 'createdAt') {
+      totalWhereObj = {
+        ...queryObj.where,
+        createdAt: {
+          lte: startDate,
+          gte: endDate,
+        },
+      };
+    } else {
+      totalWhereObj = { ...queryObj.where };
+      delete totalWhereObj.slug;
+    }
+
+    const getTotalData = await prisma.post.aggregate({
+      _count: { id: true },
+      where: totalWhereObj,
+    });
+    const totalData = getTotalData._count.id;;
+    
+    let endOfPage = false;
+    if (postData.length === 0) {
+      endOfPage = true;
+    }
+    
+    return res.status(200).json({
+      message: 'success',
+      statusCode: 200,
+      data: postData,
+      meta: {
+        page_size: limit,
+        total_data: totalData,
+        last_data: lastData,
+        end_of_page: endOfPage,
+      }
+    });
+  } catch (error) {
+    console.log(error);
+    req.error = error.message;
+    return res.status(500).json({
+      message: error.message,
+      statusCode: 500
+    });
+  }
+}
+
 module.exports = {
   createPost,
-  getData,
+  getAll,
   getById,
   getByTitle,
   getByUser,
   editPost,
   deletePost,
+  getAllOp,
 }
