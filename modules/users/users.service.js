@@ -311,11 +311,11 @@ const changeAvatar = async (req, res) => {
       quality: 60,
       alphaQuality: 80,
     }
-    const image = await sharp(avatarFile.data).toFormat('jpeg').jpeg(compressConfig).resize(1000, 1000);
+    const compressedImg = sharp(avatarFile.data).toFormat('jpeg').jpeg(compressConfig).resize(1000, 1000);
 
     const fileName =  Date.now() + avatarExt;
     uploadPath += `/${fileName}`;
-    await image.toFile(uploadPath);
+    await compressedImg.toFile(uploadPath);
 
     await prisma.users.update({
       data: {

@@ -473,6 +473,7 @@ const createPost = async (req, res) => {
     let fileName = null;
     if (req.files) {
       const imageFile = req.files.image;
+
       const allowExt = ['.jpg', '.jpeg', '.png'];
       const imageExt = extention.getExt(imageFile.name);
       if (!allowExt.includes(imageExt)) {
@@ -480,6 +481,11 @@ const createPost = async (req, res) => {
           message: 'Invalid image format. Allowed format: .jpg, .jpeg, .png',
           statusCode: 422,
         });
+      }
+
+      let uploadPath = `${__basedir}/public/images/post/${userId}`;
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath);
       }
 
       const dimension = sizeOf(imageFile.data);
@@ -495,15 +501,16 @@ const createPost = async (req, res) => {
         heightNow = maxHeight;
         widthNow = Math.ceil((dimension.width / dimension.height) * heightNow);
       }
+      const compressConfig = {
+        lossless: true,
+        quality: 60,
+        alphaQuality: 80,
+      }
+      const compressedImg = sharp(imageFile.data).toFormat('jpeg').jpeg(compressConfig).resize(widthNow, heightNow);
 
       fileName =  Date.now() + imageExt;
-      let uploadPath = `${__basedir}/public/images/post/${userId}`;
-      if (!fs.existsSync(uploadPath)) {
-        fs.mkdirSync(uploadPath);
-      }
-
       uploadPath += `/${fileName}`;
-      await sharp(imageFile.data).resize(widthNow, heightNow).toFile(uploadPath);
+      await compressedImg.toFile(uploadPath);
     }
     
     const createData = await prisma.post.create({
@@ -582,6 +589,7 @@ const editPost = async (req, res) => {
     let fileName = checkPost.images;
     if (req.files) {
       const imageFile = req.files.image;
+
       const allowExt = ['.jpg', '.jpeg', '.png'];
       const imageExt = extention.getExt(imageFile.name);
       if (!allowExt.includes(imageExt)) {
@@ -589,6 +597,15 @@ const editPost = async (req, res) => {
           message: 'Invalid image format. Allowed format: .jpg, .jpeg, .png',
           statusCode: 422,
         });
+      }
+
+      
+      let uploadPath = `${__basedir}/public/images/post/${userId}`;
+      if (checkPost.images && fs.existsSync(`${uploadPath}/${checkPost.images}`)) {
+        fs.unlinkSync(`${uploadPath}/${checkPost.images}`);
+      }
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath);
       }
 
       const dimension = sizeOf(imageFile.data);
@@ -604,17 +621,16 @@ const editPost = async (req, res) => {
         heightNow = maxHeight;
         widthNow = Math.ceil((dimension.width / dimension.height) * heightNow);
       }
+      const compressConfig = {
+        lossless: true,
+        quality: 60,
+        alphaQuality: 80,
+      }
+      const compressedImg = sharp(imageFile.data).toFormat('jpeg').jpeg(compressConfig).resize(widthNow, heightNow);
 
       fileName =  Date.now() + imageExt;
-      let uploadPath = `${__basedir}/public/images/post/${userId}`;
-      if (checkPost.images && fs.existsSync(`${uploadPath}/${checkPost.images}`)) {
-        fs.unlinkSync(`${uploadPath}/${checkPost.images}`);
-      }
-      if (!fs.existsSync(uploadPath)) {
-        fs.mkdirSync(uploadPath);
-      }
       uploadPath += `/${fileName}`;
-      await sharp(imageFile.data).resize(widthNow, heightNow).toFile(uploadPath);
+      await compressedImg.toFile(uploadPath);
     } 
 
     let slug;
