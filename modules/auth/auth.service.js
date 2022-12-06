@@ -111,14 +111,41 @@ const login = async (req, res) => {
 // logout controller
 const logout = async (req, res) => {
   try {
-    const id = req.user.id;
+    const getToken = req.headers['authorization'];
 
-    await prisma.users.update({
-      data: { token: null },
-      where: { id: id}
+    if (!getToken) {
+      return res.status(401).json({
+        message: 'no token',
+        statusCode: 401
+      });
+    }
+
+    const token = getToken.replace('Bearer ', '');
+    const tokenMatch = await prisma.users.findFirst({
+      select: {
+        id: true,
+        token: true,
+      },
+      where: {
+          token: token,
+          deleted: null
+      }
     });
 
-    await userLog.createLog(id, 'logout');
+    if (!tokenMatch) {
+      return res.status(401).json({
+        message: 'token invalid',
+        statusCode: 401
+      });
+    }
+
+    const userId = tokenMatch.id;
+    await prisma.users.update({
+      data: { token: null },
+      where: { id: userId}
+    });
+
+    await userLog.createLog(userId, 'logout');
 
     return res.status(200).json({
       message: 'logout success',
